@@ -36,7 +36,7 @@ agent_params="lr="$lr",ep=1,ep_end="$eps_end",ep_endt="$eps_endt",discount="$dis
 #eval_freq=250000
 #eval_steps=125000
 
-steps=2000000
+steps=10000
 eval_freq=250
 eval_steps=125
 

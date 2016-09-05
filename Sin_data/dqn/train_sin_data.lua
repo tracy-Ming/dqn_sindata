@@ -77,7 +77,7 @@ local s_value={}
 
 function getSinValue(sin_index, dt)  --RMB/1$
    --无噪声情况
-    return math.sin(sin_index*dt)+1
+    --return math.sin(sin_index*dt)+1
  
   --噪声-6 ～ 6
   --  x=torch.uniform() +torch.random(1, 5)
@@ -85,9 +85,9 @@ function getSinValue(sin_index, dt)  --RMB/1$
   --return math.abs(math.sin(sin_index*dt)+1+x*y )
 
 --噪声-1 ～ 1
---      x=torch.uniform() 
---      y=math.pow(-1,torch.random(1,100))
---    return math.abs(math.sin(sin_index*dt)+1+x*y )
+      x=torch.uniform() 
+      y=math.pow(-1,torch.random(1,100))
+    return math.abs(math.sin(sin_index*dt)+1+x*y )
   end
 
 function getState()
