@@ -76,23 +76,31 @@ local s_value={}
   shb={}
 
 function getSinValue(sin_index, dt)  --RMB/1$
- -- return math.sin(sin_index*dt)+1
-  x=torch.uniform() +torch.random(1, 5)
-  y=math.pow(-1,torch.random(1,5))
-return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
+   --无噪声情况
+    return math.sin(sin_index*dt)+1
+ 
+  --噪声-6 ～ 6
+  --  x=torch.uniform() +torch.random(1, 5)
+  --  y=math.pow(-1,torch.random(1,100))
+  --return math.abs(math.sin(sin_index*dt)+1+x*y )
+
+--噪声-1 ～ 1
+--      x=torch.uniform() 
+--      y=math.pow(-1,torch.random(1,100))
+--    return math.abs(math.sin(sin_index*dt)+1+x*y )
   end
 
 function getState()
-   sin_index  = sin_index + 1
-   hold_num = hold_num   -- buy 1$ at point11
-   Account  =   Account - getSinValue(11,dt)
-  local sinTensor = torch.Tensor(points+2,1):fill(0.01)
-   for i  = sin_index , sin_index + points  -1 do 
-     sinTensor[ i - sin_index + 1] = getSinValue(  i , dt  )
-   end
-   sinTensor[11]  = hold_num
-   sinTensor[12]  = Account_All
-  return  sinTensor,0,false
+     sin_index  = sin_index + 1
+     hold_num = hold_num   -- buy 1$ at point11
+     Account  =   Account - getSinValue(11,dt)
+    local sinTensor = torch.Tensor(points+2,1):fill(0.01)
+     for i  = sin_index , sin_index + points  -1 do 
+       sinTensor[ i - sin_index + 1] = getSinValue(  i , dt  )
+     end
+     sinTensor[11]  = hold_num
+     sinTensor[12]  = Account_All
+    return  sinTensor,0,false
   end
 
 function Step(action)
@@ -109,19 +117,11 @@ function Step(action)
         print (sin_index+points , getSinValue(sin_index+points,dt)  )
         print (sin_index+points-1 , getSinValue(sin_index+points-1,dt)  ) 
         print ("reward=",hold_num,"X",dprice)
---   if(action==-1) then
---     dprice=dprice*0.55
---   end
---   if(action==0) then
---     dprice=dprice*0.35
---    end
---    if(action==-1) then
---     dprice=dprice*0.1
---    end
-  hold_num  = hold_num  + action
+
+  hold_num  = hold_num  + action --buy/hold/sell 1$ at point 12
   local rw=hold_num  * dprice ---action
-  --hold_num  = hold_num  + action --buy/hold/sell 1$ at point 12
-  Account  = Account  - action  * getSinValue(  sin_index+points  , dt  )
+
+  Account  = Account  - action  * getSinValue(  sin_index+points  , dt  ) --the remaining  of account
    
 --   if(hold_num<=0) then
 --     terminal=true
@@ -142,11 +142,6 @@ function Step(action)
   return sinTensor, rw, terminal
 end
 
---RandomStep Function
---function gameEnv:_randomStep()
---    return self:_step(self._actions[torch.random(#self._actions)])
---end
-
 function NewState()
   print("here-----------")
   hold_num=1 --dollar
@@ -158,7 +153,7 @@ function NewState()
   return  sinTensor,reward,terminal
 end
 
-function NewRandomState(k)       -------------------what's the mening?
+function NewRandomState(k)       -------------------what's the meaning?
   local sinTensor,reward,terminal = NewState()
    k = k or torch.random(opt.random_starts)
     for i=1,k-1 do
@@ -353,10 +348,4 @@ while step < opt.steps do
         collectgarbage()
     end
    
-   -- gnuplot.pngfigure('/home/qxm/plot.png')
---gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(sindex), torch.Tensor(shb)})
---print(#sindex)
---print(#price)
---print(#shb)
---gnuplot.plotflush()
 end

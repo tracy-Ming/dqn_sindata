@@ -74,16 +74,19 @@ function getSinValue(sin_index, dt)  --RMB/1$
    --sindex[sin_index]=sin_index
    --price[sin_index]=math.sin(sin_index*dt+0.001)+1
   
---   x=torch.uniform() /10--+torch.random(1, 5)
---   y=math.pow(-1,torch.random(1,5))
---  return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
+  --无噪声
+  return math.sin(sin_index*dt+0.001)+1
   
-   x=torch.uniform() +torch.random(1, 5)
-  y=math.pow(-1,torch.random(1,5))
-return math.abs(math.sin(sin_index*dt)+1+x*y )
-  
- --return math.sin(sin_index*dt+0.001)+1
- 
+   --噪声-6 ～ 6
+  --  x=torch.uniform() +torch.random(1, 5)
+  --  y=math.pow(-1,torch.random(1,100))
+  --return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
+
+  --噪声-1 ～ 1
+--        x=torch.uniform() 
+--        y=math.pow(-1,torch.random(1,100))
+--      return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
+      
   --return sin_index*dt+1
   end
 
@@ -105,41 +108,33 @@ function Step(action)
         print (sin_index+points-1 , getSinValue(sin_index+points-1,dt)  ) 
         print ("reward=",hold_num,"X",dprice)
         
---      if(action==-1) then
---     dprice=dprice*0.55
---   end
---   if(action==0) then
---     dprice=dprice*0.35
---    end
---    if(action==-1) then
---     dprice=dprice*0.1
---    end     
-hold_num  = hold_num  + action 
-  local rw=hold_num  * dprice---action
-  trw=trw+rw
-  own[sin_index]=trw/max
-  
-  --hold_num  = hold_num  + action --buy/hold/sell 1$ at point 12
-  Account  = Account  - action  * getSinValue(  sin_index+points  , dt  )
+   
+        hold_num  = hold_num  + action 
+          local rw=hold_num  * dprice---action
+          trw=trw+rw
+          own[sin_index]=trw/max
+          
+        --hold_num  = hold_num  + action --buy/hold/sell 1$ at point 12
+        Account  = Account  - action  * getSinValue(  sin_index+points  , dt  )
    
 --   if(hold_num<=0) then
 --     terminal=true
 --     end
    
-  local sinTensor = torch.Tensor(points+2,1):fill(0.01)
-   for i=sin_index , sin_index+points-1 do 
-     sinTensor[i-sin_index+1]=getSinValue(i,dt)
-   end
-    sinTensor[11]  = hold_num
-    local tmp=Account  + hold_num  * getSinValue( sin_index + points, dt)
-    sinTensor[12]  = tmp
-    
-    print(tmp)
-    print(Account_All * (1-lossRate))
-    if tmp <  Account_All * (1-lossRate) then
-        terminal = true
-    end
-  return sinTensor, rw, terminal
+          local sinTensor = torch.Tensor(points+2,1):fill(0.01)
+           for i=sin_index , sin_index+points-1 do 
+             sinTensor[i-sin_index+1]=getSinValue(i,dt)
+           end
+            sinTensor[11]  = hold_num
+            local tmp=Account  + hold_num  * getSinValue( sin_index + points, dt)
+            sinTensor[12]  = tmp
+            
+            print(tmp)
+            print(Account_All * (1-lossRate))
+            if tmp <  Account_All * (1-lossRate) then
+                terminal = true
+            end
+          return sinTensor, rw, terminal
 end
 
 function NewState()
@@ -240,22 +235,22 @@ end
   
     local q1_res,q2_res,q3_res,qindex=agent:getQ()
     print(#q1_res)
-    gnuplot.pngfigure('/home/qxm/result/q1.png')
-gnuplot.plot({torch.Tensor(qindex), torch.Tensor(q1_res)},{torch.Tensor(qindex), torch.Tensor(q2_res)} , {torch.Tensor(qindex),torch.Tensor(q3_res)},{torch.Tensor(sindex), torch.Tensor(price)})
-gnuplot.plotflush()
+    gnuplot.pngfigure('/home/qxm/mydemo/Sin_data/q1.png')
+    gnuplot.plot({torch.Tensor(qindex), torch.Tensor(q1_res)},{torch.Tensor(qindex), torch.Tensor(q2_res)} , {torch.Tensor(qindex),torch.Tensor(q3_res)},{torch.Tensor(sindex), torch.Tensor(price)})
+    gnuplot.plotflush()
 --gnuplot.pngfigure('/home/qxm/result/q2.png')
 --gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
 --gnuplot.pngfigure('/home/qxm/result/q3.png')
 --gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
     
     
-gnuplot.pngfigure('/home/qxm/result/plot.png')
-gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
-print(#sindex)
-print(#price)
-print(#shb)
-print(#own)
-gnuplot.plotflush()
+    gnuplot.pngfigure('/home/qxm/mydemo/Sin_data/plot.png')
+    gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
+    print(#sindex)
+    print(#price)
+    print(#shb)
+    print(#own)
+    gnuplot.plotflush()
 -- end GIF animation and close CSV file
 --gd.gifAnimEnd(gif_filename)
 
