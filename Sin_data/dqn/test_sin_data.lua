@@ -67,15 +67,12 @@ end
   trw=0
   own={}
   max=100
-  loop=500
+  loop=50000
   action_index={}
 
 function getSinValue(sin_index, dt)  --RMB/1$
-   --sindex[sin_index]=sin_index
-   --price[sin_index]=math.sin(sin_index*dt+0.001)+1
-  
   --无噪声
-  return math.sin(sin_index*dt+0.001)+1
+  --return math.sin(sin_index*dt+0.001)+1
   
    --噪声-6 ～ 6
   --  x=torch.uniform() +torch.random(1, 5)
@@ -83,9 +80,9 @@ function getSinValue(sin_index, dt)  --RMB/1$
   --return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
 
   --噪声-1 ～ 1
---        x=torch.uniform() 
---        y=math.pow(-1,torch.random(1,100))
---      return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
+        x=torch.uniform() 
+        y=math.pow(-1,torch.random(1,100))
+      return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
       
   --return sin_index*dt+1
   end
@@ -148,6 +145,55 @@ function NewState()
   return  sinTensor,reward,terminal
 end
 
+function getSlop(screen,n)
+  local x=(torch.range(1,n)*0.05):reshape(n,1)
+  local xt=x:reshape(1,n)
+  local y1=(screen[{{1,n},1}]):reshape(n,1)
+   --print (x,y1)
+   local x_average=torch.sum(x)/n
+   local y_average=torch.sum(y1)/n
+--   print(x_average)
+--   print(y_average)
+--   print(torch.sum(xt*y1))
+--  print(x_average*y_average*n)
+--  print(torch.sum(xt*x))
+--  print(n*x_average*x_average)
+  b=(torch.sum(xt*y1)-x_average*y_average*n)/(torch.sum(xt*x)-n*x_average*x_average)
+  
+  return b
+
+  end
+
+function getAction(screen)
+  --斜率涨跌
+--  local y1=(screen[{{1,7 },1}]):reshape(7,1)
+--  local y2=(screen[{{4,10 },1}]):reshape(7,1)
+--  print(getSlop(y2,7))
+-- print(getSlop(y1,7))  
+--  if(getSlop(y2,7)>getSlop(y1,7)) then 
+--    return 3
+--  end
+--  if(getSlop(y2,7)==getSlop(y1,7)) then 
+--    return 2
+--  end
+--  if(getSlop(y2,7)<getSlop(y1,7)) then 
+--    return 1
+--  end
+  
+    --斜率正负
+  local y1=(screen[{{1,10 },1}]):reshape(10,1)
+  --print(getSlop(y1,10))  
+  if(getSlop(y1,10)>0) then 
+    return 3
+  end
+  if(getSlop(y1,10)==0) then 
+    return 2
+  end
+  if(getSlop(y1,10)<0) then 
+    return 1
+  end
+
+end
 
 
 
@@ -182,16 +228,17 @@ T_reward=0
 --while not terminal do
    for i=1,loop do
      print(terminal)
-     if  terminal then
-       break
-       end
+--     if  terminal then
+--       break
+--       end
    -- if action was chosen randomly, Q-value is 0
     agent.bestq = 0
     -- choose the best action
     print()
     print("Loop----------------------",i)
     --print("Looping----------------------")
-    local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
+    --local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
+    local action_index = getAction(screen)
     print("next action 1/2/3 for S/H/B",action_index)
     -- play game in test mode (episodes don't end when losing a life)
     --screen, reward, terminal = game_env:step(game_actions[action_index], false)
@@ -235,9 +282,9 @@ end
   
     local q1_res,q2_res,q3_res,qindex=agent:getQ()
     print(#q1_res)
-    gnuplot.pngfigure('/home/qxm/mydemo/Sin_data/q1.png')
-    gnuplot.plot({torch.Tensor(qindex), torch.Tensor(q1_res)},{torch.Tensor(qindex), torch.Tensor(q2_res)} , {torch.Tensor(qindex),torch.Tensor(q3_res)},{torch.Tensor(sindex), torch.Tensor(price)})
-    gnuplot.plotflush()
+--    gnuplot.pngfigure('/home/qxm/mydemo/Sin_data/q1.png')
+--    gnuplot.plot({torch.Tensor(qindex), torch.Tensor(q1_res)},{torch.Tensor(qindex), torch.Tensor(q2_res)} , {torch.Tensor(qindex),torch.Tensor(q3_res)},{torch.Tensor(sindex), torch.Tensor(price)})
+--    gnuplot.plotflush()
 --gnuplot.pngfigure('/home/qxm/result/q2.png')
 --gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
 --gnuplot.pngfigure('/home/qxm/result/q3.png')
@@ -245,7 +292,8 @@ end
     
     
     gnuplot.pngfigure('/home/qxm/mydemo/Sin_data/plot.png')
-    gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
+    gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)} , {torch.Tensor(action_index),torch.Tensor(own)})
+    --gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
     print(#sindex)
     print(#price)
     print(#shb)
