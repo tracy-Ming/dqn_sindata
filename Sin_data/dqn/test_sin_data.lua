@@ -67,63 +67,87 @@ end
   trw=0
   own={}
   max=100
-  loop=50000
+  loop=250
   action_index={}
 
 function getSinValue(sin_index, dt)  --RMB/1$
   --无噪声
-  --return math.sin(sin_index*dt+0.001)+1
+  return math.sin(sin_index*dt+0.001)+1
   
    --噪声-6 ～ 6
-  --  x=torch.uniform() +torch.random(1, 5)
-  --  y=math.pow(-1,torch.random(1,100))
-  --return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
+--    x=torch.uniform() +torch.random(1, 5)
+--    y=math.pow(-1,torch.random(1,100))
+--  return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
 
   --噪声-1 ～ 1
-        x=torch.uniform() 
-        y=math.pow(-1,torch.random(1,100))
-      return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
+--        x=torch.uniform() 
+--        y=math.pow(-1,torch.random(1,100))
+--      return math.abs(math.sin(sin_index*dt+0.001)+1+1+x*y )
       
   --return sin_index*dt+1
+  end
+
+for i=1,10 do 
+  price[i]=getSinValue(i-10,dt)
+  sindex[i]=i-10
   end
 
 
 function Step(action)
     sin_index = sin_index + 1
   
-  shb[sin_index]=action+1 -----plot
-  sindex[sin_index]=sin_index
-  action_index[sin_index]=sin_index+10
-   price[sin_index]=getSinValue(sin_index,dt)
+    shb[sin_index]=action+1 -----plot
+    sindex[sin_index+10]=sin_index
+    action_index[sin_index]=sin_index
+    
+    --next time price
+    price[sin_index+points]=getSinValue(sin_index+points,dt)
    
   
   local terminal =  false
   
-  local dprice  = getSinValue(sin_index+points  , dt)  - getSinValue(sin_index+points-1 , dt)
-  -------------------print___info------------------------
-        print (sin_index+points , getSinValue(sin_index+points,dt)  )
-        print (sin_index+points-1 , getSinValue(sin_index+points-1,dt)  ) 
-        print ("reward=",hold_num,"X",dprice)
+  local dprice  = price[sin_index+points]-price[sin_index+points-1]
         
+        if action==-1 then 
+           if hold_num<=0 then
+             hold_num=hold_num+action
+           end
+           if hold_num>0 then
+              action=action*math.abs(hold_num)
+              hold_num=0             
+             end
+        end
+        if action==1 then 
+            if hold_num<0 then
+            action=action*math.abs(hold_num)
+             hold_num=0
+           end
+           if hold_num>=0 then
+             hold_num=hold_num+action
+             end
+        end
    
-        hold_num  = hold_num  + action 
+          -------------------print___info------------------------
+        print (sin_index+points , price[sin_index+points] )
+        print (sin_index+points-1 , price[sin_index+points-1]  ) 
+        print ("reward=",hold_num,"X",dprice," = ",hold_num*dprice)
+   
+        --hold_num  = hold_num  + action 
           local rw=hold_num  * dprice---action
-          trw=trw+rw
-          own[sin_index]=trw/max
+                    trw=trw+rw
+                    own[sin_index]=trw/max
           
-        --hold_num  = hold_num  + action --buy/hold/sell 1$ at point 12
-        Account  = Account  - action  * getSinValue(  sin_index+points  , dt  )
-   
---   if(hold_num<=0) then
---     terminal=true
---     end
+            print("before action",Account)
+            --hold_num  = hold_num  + action --buy/hold/sell 1$ at point 12
+            Account  = Account  - action  * price[sin_index+points]
+            print("after -",action,"X",price[sin_index+points],-action  * price[sin_index+points]," = ",Account)
+
    
           local sinTensor = torch.Tensor(points+2,1):fill(0.01)
-           for i=sin_index , sin_index+points-1 do 
-             sinTensor[i-sin_index+1]=getSinValue(i,dt)
-           end
+          sinTensor[{{1,10},1}]=torch.Tensor(price):reshape(#price,1):sub(sin_index+1,sin_index+points)
+          
             sinTensor[11]  = hold_num
-            local tmp=Account  + hold_num  * getSinValue( sin_index + points, dt)
+            local tmp=Account  + hold_num  * price[sin_index+points]
             sinTensor[12]  = tmp
             
             print(tmp)
@@ -181,7 +205,7 @@ function getAction(screen)
 --  end
   
     --斜率正负
-  local y1=(screen[{{1,10 },1}]):reshape(10,1)
+  local y1=screen:sub(1,10)
   --print(getSlop(y1,10))  
   if(getSlop(y1,10)>0) then 
     return 3
@@ -226,11 +250,11 @@ n_reward=0
 T_reward=0
 -- play one episode (game)
 --while not terminal do
-   for i=1,loop do
+   for i=2,loop do
      print(terminal)
---     if  terminal then
---       break
---       end
+     if  terminal then
+       break
+       end
    -- if action was chosen randomly, Q-value is 0
     agent.bestq = 0
     -- choose the best action
@@ -292,8 +316,8 @@ end
     
     
     gnuplot.pngfigure('/home/qxm/mydemo/Sin_data/plot.png')
-    gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)} , {torch.Tensor(action_index),torch.Tensor(own)})
-    --gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
+    --gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)} , {torch.Tensor(action_index),torch.Tensor(own)})
+    gnuplot.plot({torch.Tensor(sindex), torch.Tensor(price)},{torch.Tensor(action_index), torch.Tensor(shb)} , {torch.Tensor(action_index),torch.Tensor(own)})
     print(#sindex)
     print(#price)
     print(#shb)

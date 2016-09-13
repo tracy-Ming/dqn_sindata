@@ -72,8 +72,8 @@ local s_value={}
   Account=Account_All --RMB
   
     price={}
-  sindex={}
-  shb={}
+    sindex={}
+    shb={}
 
 function getSinValue(sin_index, dt)  --RMB/1$
    --无噪声情况
@@ -91,60 +91,78 @@ function getSinValue(sin_index, dt)  --RMB/1$
   end
 
 function getState()
-     sin_index  = sin_index + 1
-     hold_num = hold_num   -- buy 1$ at point11
-     Account  =   Account - getSinValue(11,dt)
-    local sinTensor = torch.Tensor(points+2,1):fill(0.01)
-     for i  = sin_index , sin_index + points  -1 do 
-       sinTensor[ i - sin_index + 1] = getSinValue(  i , dt  )
-     end
-     sinTensor[11]  = hold_num
-     sinTensor[12]  = Account_All
-    return  sinTensor,0,false
+         sin_index  = sin_index + 1
+         hold_num = hold_num   -- buy 1$ at point11
+         Account  =   Account - getSinValue(11,dt)
+        local sinTensor = torch.Tensor(points+2,1):fill(0.01)
+         for i  = sin_index , sin_index + points  -1 do 
+           sinTensor[ i - sin_index + 1] = getSinValue(  i , dt  )
+         end
+         sinTensor[11]  = hold_num
+         sinTensor[12]  = Account_All
+      return  sinTensor,0,false
+  end
+
+for i=1,10 do 
+  price[i]=getSinValue(i-10,dt)
+  sindex[i]=i-10
   end
 
 function Step(action)
-  sin_index = sin_index + 1
+        sin_index = sin_index + 1
+        shb[sin_index]=action+1 -----plot
+        sindex[sin_index+10]=sin_index
+        price[sin_index+points]=getSinValue(sin_index+points,dt)
   
-    shb[sin_index]=action+1 -----plot
-  sindex[sin_index]=sin_index
-   price[sin_index]=getSinValue(sin_index,dt)
+      local terminal =  false
+      local dprice  = price[sin_index+points]-price[sin_index+points-1]
   
-  local terminal =  false
-  
-  local dprice  = getSinValue(sin_index+points  , dt)  - getSinValue(sin_index+points-1 , dt)
-  -------------------print___info------------------------
-        print (sin_index+points , getSinValue(sin_index+points,dt)  )
-        print (sin_index+points-1 , getSinValue(sin_index+points-1,dt)  ) 
-        print ("reward=",hold_num,"X",dprice)
+          if action==-1 then 
+           if hold_num<=0 then
+             hold_num=hold_num+action
+           end
+           if hold_num>0 then
+              action=action*math.abs(hold_num)
+              hold_num=0             
+             end
+        end
+        if action==1 then 
+            if hold_num<0 then
+            action=action*math.abs(hold_num)
+             hold_num=0
+           end
+           if hold_num>=0 then
+             hold_num=hold_num+action
+             end
+        end
+        
+        -------------------print___info------------------------
+        print (sin_index+points , price[sin_index+points] )
+        print (sin_index+points-1 , price[sin_index+points-1]  ) 
+        print ("reward=",hold_num,"X",dprice," = ",hold_num*dprice)
 
-  hold_num  = hold_num  + action --buy/hold/sell 1$ at point 12
-  local rw=hold_num  * dprice ---action
-
-  Account  = Account  - action  * getSinValue(  sin_index+points  , dt  ) --the remaining  of account
-   
---   if(hold_num<=0) then
---     terminal=true
---     end
-   
-  local sinTensor = torch.Tensor(points+2,1):fill(0.01)
-   for i=sin_index , sin_index+points-1 do 
-     sinTensor[i-sin_index+1]=getSinValue(i,dt)
-   end
-    sinTensor[11]  = hold_num
-    local tmp=Account  + hold_num  * getSinValue( sin_index + points, dt)
-    sinTensor[12]  = tmp
-    
-    
-    if tmp <  Account_All *  (1-lossRate)  then
-        terminal = true
-    end
+        --hold_num  = hold_num  + action --buy/hold/sell 1$ at point 12
+        local rw=hold_num  * dprice ---action
+                
+                Account  = Account  - action  * price[sin_index+points] --the remaining  of account
+              
+              local sinTensor = torch.Tensor(points+2,1):fill(0.01)
+                      sinTensor[{{1,10},1}]=torch.Tensor(price):reshape(#price,1):sub(sin_index+1,sin_index+points)
+                      sinTensor[11]  = hold_num
+              local tmp=Account  + hold_num  * price[sin_index+points]
+              sinTensor[12]  = tmp
+              
+              print(tmp)
+              print(Account_All * (1-lossRate))
+              if tmp <  Account_All * (1-lossRate) then
+                  terminal = true
+              end
   return sinTensor, rw, terminal
 end
 
 function NewState()
   print("here-----------")
-  hold_num=1 --dollar
+  hold_num=0 --dollar
   Account=Account_All --RMB
    local sinTensor,reward,terminal = Step(0)
 --   while not terminal do
@@ -176,7 +194,7 @@ local v_history = {}
 local qmax_history = {}
 local td_history = {}
 local reward_history = {}
-local step = 0
+local step = 1
 time_history[1] = 0
 
 local total_reward
@@ -185,11 +203,11 @@ local nepisodes
 local episode_reward
 
 --local screen, reward, terminal = game_env:getState()
-local screen, reward, terminal = getState()
+local screen, reward, terminal = NewState()
  print( "first state: ")
  print(screen )
 
-print("Iteration ..", step)
+--print("Iteration ..", step)
 --print(getSinValue(92,0.05))
 local win = nil
 --while step < 1000 do

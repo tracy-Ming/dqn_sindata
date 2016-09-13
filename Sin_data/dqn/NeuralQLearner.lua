@@ -411,8 +411,8 @@ function nql:greedy(state)
 nnq=nnq+1    
     local maxq = q[1]
     local besta = {1}
-    print("Q值为")
-    print(q)
+    --print("Q值为")
+    --print(q)
 
     -- Evaluate all other actions (with random tie-breaking)
     for a = 2, self.n_actions do
