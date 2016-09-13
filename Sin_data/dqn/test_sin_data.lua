@@ -67,7 +67,7 @@ end
   trw=0
   own={}
   max=100
-  loop=250
+  loop=1000
   action_index={}
 
 function getSinValue(sin_index, dt)  --RMB/1$
@@ -101,7 +101,7 @@ function Step(action)
     action_index[sin_index]=sin_index
     
     --next time price
-    price[sin_index+points]=getSinValue(sin_index+points,dt)
+    price[sin_index+points]=getSinValue(sin_index,dt)
    
   
   local terminal =  false
