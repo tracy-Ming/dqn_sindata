@@ -67,22 +67,22 @@ end
   trw=0
   own={}
   max=100
-  loop=1000
+  loop=50000
   action_index={}
 
 function getSinValue(sin_index, dt)  --RMB/1$
   --无噪声
-  return math.sin(sin_index*dt+0.001)+1
+  --return math.sin(sin_index*dt+0.001)+1+1
   
    --噪声-6 ～ 6
 --    x=torch.uniform() +torch.random(1, 5)
 --    y=math.pow(-1,torch.random(1,100))
---  return math.abs(math.sin(sin_index*dt+0.001)+1+x*y )
+--  return math.abs(math.sin(sin_index*dt+0.001)+1+6+x*y )
 
   --噪声-1 ～ 1
---        x=torch.uniform() 
---        y=math.pow(-1,torch.random(1,100))
---      return math.abs(math.sin(sin_index*dt+0.001)+1+1+x*y )
+        x=torch.uniform() 
+        y=math.pow(-1,torch.random(1,100))
+      return math.abs(math.sin(sin_index*dt+0.001)+1+1+x*y )
       
   --return sin_index*dt+1
   end
@@ -96,7 +96,7 @@ for i=1,10 do
 function Step(action)
     sin_index = sin_index + 1
   
-    shb[sin_index]=action+1 -----plot
+    shb[sin_index]=action+1+1 -----plot--noise +6 --better in picture 
     sindex[sin_index+10]=sin_index
     action_index[sin_index]=sin_index
     
