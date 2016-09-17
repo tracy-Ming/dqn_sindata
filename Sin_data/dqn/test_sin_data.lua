@@ -67,7 +67,7 @@ end
   trw=0
   own={}
   max=100
-  loop=50000
+  loop=10000
   action_index={}
 
 function getSinValue(sin_index, dt)  --RMB/1$
@@ -96,7 +96,7 @@ for i=1,10 do
 function Step(action)
     sin_index = sin_index + 1
   
-    shb[sin_index]=action+1+1 -----plot--noise +6 --better in picture 
+    shb[sin_index]=action+1+1-----plot--noise +6 --better in picture 
     sindex[sin_index+10]=sin_index
     action_index[sin_index]=sin_index
     
@@ -261,8 +261,8 @@ T_reward=0
     print()
     print("Loop----------------------",i)
     --print("Looping----------------------")
-    --local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
-    local action_index = getAction(screen)
+    local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
+    --local action_index = getAction(screen)
     print("next action 1/2/3 for S/H/B",action_index)
     -- play game in test mode (episodes don't end when losing a life)
     --screen, reward, terminal = game_env:step(game_actions[action_index], false)
@@ -305,7 +305,7 @@ end
     print("total reward is ",T_reward)
   
     local q1_res,q2_res,q3_res,qindex=agent:getQ()
-    print(#q1_res)
+    --print(#q1_res)
 --    gnuplot.pngfigure('/home/qxm/mydemo/Sin_data/q1.png')
 --    gnuplot.plot({torch.Tensor(qindex), torch.Tensor(q1_res)},{torch.Tensor(qindex), torch.Tensor(q2_res)} , {torch.Tensor(qindex),torch.Tensor(q3_res)},{torch.Tensor(sindex), torch.Tensor(price)})
 --    gnuplot.plotflush()
